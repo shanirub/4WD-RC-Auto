@@ -106,14 +106,14 @@ void loop()
       // read line by line what the client (web browser) is requesting
       if (client.available())
       {
-        String line = client.readStringUntil('\r');
-        Serial.print(line);
-        // wait for end of client's request, that is marked with an empty line
-        if (line.length() == 1 && line[0] == '\n')
+        int requested_direction = client.read();
+        Serial.print(requested_direction);
+        /*// wait for end of client's request, that is marked with an empty line
+        if (line.length() == 1)
         {
           client.println("Hi client it's me, server");
           break;
-        }
+        }*/
       }
     }
     delay(1); // give the web browser time to receive the data
