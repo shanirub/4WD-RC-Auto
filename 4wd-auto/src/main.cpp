@@ -103,17 +103,36 @@ void loop()
     Serial.println("\n[Client connected]");
     while (client.connected())
     {
-      // read line by line what the client (web browser) is requesting
+      // reading requested direction from rc module
       if (client.available())
       {
         int requested_direction = client.read();
         Serial.print(requested_direction);
-        /*// wait for end of client's request, that is marked with an empty line
-        if (line.length() == 1)
+        switch (requested_direction)
         {
-          client.println("Hi client it's me, server");
+        case 'l':
+          turn_left();
           break;
-        }*/
+
+        case 'r':
+          turn_right();
+          break;
+        
+        case 'f':
+          drive_forward();
+          break;
+
+        case 'b':
+          drive_backwards();
+          break;
+
+        case 's':
+          stop_driving();
+          break;
+
+        default:
+          break;
+        }
       }
     }
     delay(1); // give the web browser time to receive the data
