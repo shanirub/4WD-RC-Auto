@@ -1,0 +1,20 @@
+[1mdiff --git a/4wd-auto/src/main.cpp b/4wd-auto/src/main.cpp[m
+[1mindex 67b1971..1136de4 100644[m
+[1m--- a/4wd-auto/src/main.cpp[m
+[1m+++ b/4wd-auto/src/main.cpp[m
+[36m@@ -66,12 +66,8 @@[m [mvoid setup() {[m
+ }[m
+ [m
+ void loop() {[m
+[31m-  drive_backwards();[m
+[31m-  delay(500);[m
+[31m-  stop_driving();[m
+[31m-  delay(500);[m
+[31m-  turn_left();[m
+[32m+[m[32m  drive_forward();[m
+   delay(500);[m
+   turn_right();[m
+   delay(500);[m
+[31m-}[m
+\ No newline at end of file[m
+[32m+[m[32m}[m
