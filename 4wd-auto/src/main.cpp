@@ -3,12 +3,15 @@
  * Code for the ESP12-E microcontroller.
  * Connected to motor shield.
  * 
- * 1. connect to Olafchen V
- * 2. start wifiserver
+ * 1. connects to AP (runs on rc-module)
+ * 2. starts a WebSocketServer (https://github.com/Links2004/arduinoWebSockets)
+ * 
+ * 
  */
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
+#include <WebSocketsServer.h>
 
 // motors pins
 #define LEFT_MOTORS_POWER D2 // (Motor Shield B) - Left motors
@@ -18,18 +21,20 @@
 
 int port = 2345;
 
-WiFiServer server(port);
+WebSocketsServer ws = WebSocketsServer(port);
 
-const char* ssid     = "Olafchen";
-const char* password = "lalalalala";
+const char *ssid = "Olafchen";
+const char *password = "lalalalala";
 
 int leftPower = 1023;         // left motors speed
 uint8_t leftDirection = HIGH; // left motors direction
 int rightPower = 1023;        // right motors speed
-uint8_t rightDirection = LOW;// right motors direction
+uint8_t rightDirection = LOW; // right motors direction
 
 
-void drive_forward() {
+
+void drive_forward()
+{
   Serial.println(" Driving forward...");
   digitalWrite(LEFT_MOTORS_DIRECTION, leftDirection);
   digitalWrite(RIGHT_MOTORS_DIRECTION, rightDirection);
@@ -37,7 +42,8 @@ void drive_forward() {
   analogWrite(LEFT_MOTORS_POWER, leftPower);
 }
 
-void stop_driving() {
+void stop_driving()
+{
   Serial.println(" Stopping!");
   digitalWrite(RIGHT_MOTORS_DIRECTION, rightDirection);
   digitalWrite(LEFT_MOTORS_DIRECTION, leftDirection);
@@ -45,7 +51,8 @@ void stop_driving() {
   analogWrite(LEFT_MOTORS_POWER, 0);
 }
 
-void drive_backwards() {
+void drive_backwards()
+{
   Serial.println(" Driving backwards...");
   digitalWrite(LEFT_MOTORS_DIRECTION, !leftDirection);
   digitalWrite(RIGHT_MOTORS_DIRECTION, !rightDirection);
@@ -53,7 +60,8 @@ void drive_backwards() {
   analogWrite(LEFT_MOTORS_POWER, leftPower);
 }
 
-void turn_left() {
+void turn_left()
+{
   Serial.println(" Turning left...");
   digitalWrite(LEFT_MOTORS_DIRECTION, !leftDirection);
   digitalWrite(RIGHT_MOTORS_DIRECTION, rightDirection);
@@ -61,7 +69,8 @@ void turn_left() {
   analogWrite(LEFT_MOTORS_POWER, leftPower);
 }
 
-void turn_right() {
+void turn_right()
+{
   Serial.println(" Turning right...");
   digitalWrite(LEFT_MOTORS_DIRECTION, leftDirection);
   digitalWrite(RIGHT_MOTORS_DIRECTION, !rightDirection);
@@ -69,47 +78,31 @@ void turn_right() {
   analogWrite(LEFT_MOTORS_POWER, leftPower);
 }
 
-void setup() {
-  Serial.begin(9600);
-  Serial.println("");
-  pinMode(LEFT_MOTORS_DIRECTION, OUTPUT);
-  pinMode(LEFT_MOTORS_POWER, OUTPUT);
-  pinMode(RIGHT_MOTORS_DIRECTION, OUTPUT);
-  pinMode(RIGHT_MOTORS_POWER, OUTPUT);
 
-  WiFi.begin(ssid, password);
 
-  Serial.print("Connecting");
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println();
 
-  Serial.print("Connected, IP address: ");
-  Serial.println(WiFi.localIP());
-
-  Serial.println("Starting WiFiServer in port " + port);
-  server.begin();
-}
-
-void loop()
+/**
+ * Method addapted from:
+ * https://github.com/Links2004/arduinoWebSockets/edit/master/examples/esp8266/WebSocketServer/WebSocketServer.ino
+ * 
+*/
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
 {
-  WiFiClient client = server.available();
-  // wait for a client (web browser) to connect
-  if (client)
+  IPAddress ip = ws.remoteIP(num);
+
+
+  switch (type)
   {
-    Serial.println("\n[Client connected]");
-    while (client.connected())
-    {
-      // reading requested direction from rc module
-      if (client.available())
+
+    case WStype_DISCONNECTED:
+      Serial.printf("[%u] Disconnected!\n", num);
+      break;
+
+    case WStype_CONNECTED:
+      Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+      Serial.printf("Requested direction: %s", payload);
+      switch (*payload)
       {
-        int requested_direction = client.read();
-        Serial.print(requested_direction);
-        switch (requested_direction)
-        {
         case 'l':
           turn_left();
           break;
@@ -117,7 +110,7 @@ void loop()
         case 'r':
           turn_right();
           break;
-        
+
         case 'f':
           drive_forward();
           break;
@@ -131,14 +124,60 @@ void loop()
           break;
 
         default:
-          break;
-        }
+          Serial.println(" Invalid direction, " + *payload);
       }
-    }
-    delay(1); // give the web browser time to receive the data
 
-    // close the connection:
-    client.stop();
-    Serial.println("[Client disconnected]");
+      // send message to client
+      ws.sendTXT(num, "Connected");
+      break;
+
+    case WStype_TEXT:
+      Serial.printf("[%u] get Text: %s\n", num, payload);
+
+      // send message to client
+      // webSocket.sendTXT(num, "message here");
+
+      // send data to all connected clients
+      // webSocket.broadcastTXT("message here");
+      break;
+    case WStype_BIN:
+      Serial.printf("[%u] get binary length: %u\n", num, length);
+      hexdump(payload, length);
+
+      // send message to client
+      // webSocket.sendBIN(num, payload, length);
+      break;
   }
 }
+
+  void setup()
+  {
+    Serial.begin(9600);
+    Serial.println("");
+    pinMode(LEFT_MOTORS_DIRECTION, OUTPUT);
+    pinMode(LEFT_MOTORS_POWER, OUTPUT);
+    pinMode(RIGHT_MOTORS_DIRECTION, OUTPUT);
+    pinMode(RIGHT_MOTORS_POWER, OUTPUT);
+
+    WiFi.begin(ssid, password);
+
+    Serial.print("Connecting");
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      delay(500);
+      Serial.print(".");
+    }
+    Serial.println();
+
+    Serial.print("Connected, IP address: ");
+    Serial.println(WiFi.localIP());
+
+    Serial.println("Starting WebSocketsServer on port " + port);
+    ws.begin();
+    ws.onEvent(webSocketEvent);
+  }
+
+  void loop()
+  {
+    ws.loop();
+  }
