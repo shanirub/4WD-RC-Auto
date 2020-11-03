@@ -1,0 +1,35 @@
+{
+	"folders": [
+		{
+			"name": "4wd-auto",
+			"path": "4wd-auto"
+		},
+		{
+			"path": "../Mikrocontroller-Projekt/Microcontroller_code/src"
+		},
+		{
+			"name": "rc-module",
+			"path": "rc-module"
+		},
+		{
+			"name": "disk_launcher",
+			"path": "../disk_launcher"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.tcc": "cpp",
+			"istream": "cpp",
+			"array": "cpp",
+			"deque": "cpp",
+			"list": "cpp",
+			"string": "cpp",
+			"unordered_map": "cpp",
+			"unordered_set": "cpp",
+			"vector": "cpp",
+			"initializer_list": "cpp",
+			"string_view": "cpp",
+			"ranges": "cpp"
+		}
+	}
+}

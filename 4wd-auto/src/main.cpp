@@ -9,6 +9,7 @@
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
 
 // motors pins
 #define LEFT_MOTORS_POWER D2 // (Motor Shield B) - Left motors
@@ -92,10 +93,20 @@ void setup() {
 
   Serial.println("Starting WiFiServer in port " + port);
   server.begin();
+
+  if (!MDNS.begin("auto"))
+  {
+    Serial.println("Error setting up MDNS responder!");
+    while (1)
+    {
+      delay(1000);
+    }
+  }
 }
 
 void loop()
 {
+  MDNS.update();
   WiFiClient client = server.available();
   // wait for a client (web browser) to connect
   if (client)
