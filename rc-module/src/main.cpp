@@ -26,7 +26,7 @@ const char *password = "lalalalala";
 
 const int port = 2345;
 
-char *wifiserver_ip;
+IPAddress auto_ip;
 
 char direction = 's';
 
@@ -66,7 +66,7 @@ void setup()
 
   Serial.print("Stations connected: ");
   Serial.println(WiFi.softAPgetStationNum());
-
+/*
   // here we need to find the station's ip connected to this ap
   wifi_sta_list_t wifi_sta_list;
   tcpip_adapter_sta_list_t adapter_sta_list;
@@ -102,7 +102,7 @@ void setup()
 
     wifiserver_ip = station_ip;
   }
-
+*/
   if (!MDNS.begin("rc-module"))
   {
     Serial.println("Error setting up MDNS responder!");
@@ -113,8 +113,12 @@ void setup()
   }
   Serial.println("mDNS responder started");
 
-  Serial.println("-----------");
-  delay(5000);
+  delay(5000); // waiting for auto to finish his mdns declaration 
+  auto_ip = MDNS.queryHost("auto");
+  Serial.print("Auto ip is: ");
+  Serial.println(auto_ip);
+
+
 }
 
 void print_values()
@@ -170,7 +174,7 @@ void loop()
   }
 
   WiFiClient client;
-  if (!client.connect(wifiserver_ip, port))
+  if (!client.connect(auto_ip, port))
   {
     Serial.println("connection failed");
     return;
